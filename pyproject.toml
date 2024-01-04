@@ -13,7 +13,7 @@ classifiers         = [
 ]
 
 [project.scripts]
-"evd-lemon"         = "waybar_custom_modules.cli:main"
+"waybar-custom-modules" = "waybar_custom_modules.cli:main"
 
 [project.urls]
 "Homepage"          = "https://github.com/Ferdi265/waybar_custom_modules"
