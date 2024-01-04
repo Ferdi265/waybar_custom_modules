@@ -26,14 +26,16 @@ also mitigated by my
 [linux-preserve-modules](https://aur.archlinux.org/packages/linux-preserve-modules)
 AUR package, but it doesn't hurt to have an additional reminder.
 
-```json
+```js
 // .config/waybar/config
-"custom/linux": {
-    "exec": "waybar-custom-modules linux",
-    "format": "{icon}",
-    "format-icons": ["", "\uf17c \uf021"],
-    "return-type": "json"
-},
+{
+    "custom/linux": {
+        "exec": "waybar-custom-modules linux",
+        "format": "{icon}",
+        "format-icons": ["", "\uf17c \uf021"],
+        "return-type": "json"
+    }
+}
 ```
 
 ```css
