@@ -25,6 +25,7 @@ def report(profile: str):
 
 
 def main():
+    # TODO: do this with DBus
     while True:
         profile = check_output(["powerprofilesctl", "get"]).decode()[:-1]
         report(profile)
