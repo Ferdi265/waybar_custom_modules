@@ -45,3 +45,31 @@ AUR package, but it doesn't hurt to have an additional reminder.
     color: #002b36;
 }
 ```
+
+## Module `powerprofile`
+
+Checks the current power profile of the system using `powerprofilesctl get`.
+
+```js
+// .config/waybar/config
+{
+    "custom/powerprofile": {
+        "exec": "waybar-custom-modules powerprofile",
+        "format": "{icon}",
+        "format-icons": ["", "\f059", "\uf624", "\uf625"],
+        "return-type": "json"
+    },
+}
+```
+
+```css
+/* .config/waybar/style.css */
+#custom-powerprofile {
+    background-color: #c59900;
+    color: #002b36;
+}
+
+#custom-powerprofile.performance {
+    background-color: #cb4b16;
+}
+```
