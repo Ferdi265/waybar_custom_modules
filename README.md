@@ -48,7 +48,8 @@ AUR package, but it doesn't hurt to have an additional reminder.
 
 ## Module `powerprofile`
 
-Checks the current power profile of the system using `powerprofilesctl get`.
+Checks the current power profile of the system using the
+`org.freedesktop.UPower.PowerProfiles` DBus service.
 
 ```js
 // .config/waybar/config
