@@ -1,8 +1,6 @@
-from subprocess import check_output
-import os.path
-import time
+from gi.repository import GLib
+from pydbus import SystemBus
 import json
-import sys
 
 def report_profile(profile: str, percentage: int):
     print(json.dumps({
@@ -23,11 +21,16 @@ def report(profile: str):
         case _:
             report_profile(profile, 40)
 
+def on_property_changed(interface, changes, args):
+    if 'ActiveProfile' in changes:
+        report(changes['ActiveProfile'])
 
 def main():
-    # TODO: do this with DBus
-    while True:
-        profile = check_output(["powerprofilesctl", "get"]).decode()[:-1]
-        report(profile)
+    loop = GLib.MainLoop()
 
-        time.sleep(5)
+    bus = SystemBus()
+    ppd = bus.get("org.freedesktop.UPower.PowerProfiles", "/org/freedesktop/UPower/PowerProfiles")
+    ppd.PropertiesChanged.connect(on_property_changed)
+
+    report(ppd.ActiveProfile)
+    loop.run()

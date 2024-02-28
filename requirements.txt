@@ -1,0 +1,2 @@
+PyGObject ~= 3.46
+pydbus ~= 0.6
