@@ -1,11 +1,13 @@
 import sys
 from . import linux
+from . import powerprofile
 
 def usage():
     print("usage: waybar-custom-modules <module>")
     print("")
     print("MODULES:")
     print("- linux: displays a warning if the kernel was updated")
+    print("- powerprofile: displays the current power profile")
     sys.exit(1)
 
 def main():
@@ -15,10 +17,13 @@ def main():
         usage()
 
     name = args[0]
-    if name == "linux":
-        linux.main()
-    else:
-        usage()
+    match args[0]:
+        case "linux":
+            linux.main()
+        case "powerprofile":
+            powerprofile.main()
+        case _:
+            usage()
 
 if __name__ == "__main__":
     main()
