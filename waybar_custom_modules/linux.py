@@ -18,8 +18,9 @@ def report_updated(uname: str):
     }), flush=True)
 
 def main():
+    uname = check_output(["uname", "-r"]).decode()[:-1]
+
     while True:
-        uname = check_output(["uname", "-r"]).decode()[:-1]
         if os.path.exists(f"/usr/lib/modules/{uname}/vmlinuz"):
             report_empty()
         else:
