@@ -59,7 +59,7 @@ Checks the current power profile of the system using the
         "format": "{icon}",
         "format-icons": ["", "\f059", "\uf624", "\uf625"],
         "return-type": "json"
-    },
+    }
 }
 ```
 
@@ -71,6 +71,57 @@ Checks the current power profile of the system using the
 }
 
 #custom-powerprofile.performance {
+    background-color: #cb4b16;
+}
+```
+
+## Module `battery`
+
+Checks the current battery level of the system's internal battery using the
+`org.freedesktop.UPower` DBus service. This is an alternative to Waybar's
+built-in battery module that reacts faster to changes in battery level or
+charge state.
+
+```js
+// .config/waybar/config
+{
+    "custom/battery": {
+        "exec": "waybar-custom-modules battery",
+        "format": "{text} {icon}{alt}",
+        "format-icons": ["\uf244", "\uf243", "\uf242", "\uf241", "\uf240"],
+        "return-type": "json"
+    }
+}
+```
+
+```css
+/* .config/waybar/style.css */
+#custom-battery {
+    background-color: #fdf6e3;
+    color: #002b36;
+}
+
+#custom-battery.plugged {
+    background-color: #268bd2;
+}
+
+#custom-battery.full {
+    background-color: #268bd2;
+}
+
+#custom-battery.almost-full {
+    background-color: #268bd2;
+}
+
+#custom-battery.high {
+    background-color: #859900;
+}
+
+#custom-battery.medium {
+    background-color: #c59900;
+}
+
+#custom-battery.low {
     background-color: #cb4b16;
 }
 ```
