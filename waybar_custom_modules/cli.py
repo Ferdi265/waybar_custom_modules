@@ -1,6 +1,7 @@
 import sys
 from . import linux
 from . import powerprofile
+from . import battery
 
 def usage():
     print("usage: waybar-custom-modules <module>")
@@ -8,6 +9,7 @@ def usage():
     print("MODULES:")
     print("- linux: displays a warning if the kernel was updated")
     print("- powerprofile: displays the current power profile")
+    print("- battery: displays the current battery state")
     sys.exit(1)
 
 def main():
@@ -22,6 +24,8 @@ def main():
             linux.main()
         case "powerprofile":
             powerprofile.main()
+        case "battery":
+            battery.main()
         case _:
             usage()
 
