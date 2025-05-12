@@ -30,6 +30,22 @@ class BatteryState:
     PENDING_DISCHARGE = 6
 
 @dataclass
+class ChargingState:
+    plugged_in: bool
+    charging: bool
+    discharging: bool
+    full: bool
+
+def time_to_hrs_min_sec(t_sec: int) -> tuple[int, int, int]:
+    t_min, t_sec = t_sec // 60, t_sec % 60
+    t_hrs, t_min = t_min // 60, t_min % 60
+    return t_hrs, t_min, t_sec
+
+def format_time(t_sec: int) -> str:
+    t_hrs, t_min, t_sec = time_to_hrs_min_sec(t_sec)
+    return f"{t_hrs} h {t_min} min"
+
+@dataclass
 class State:
     bus: SystemBus
     upower: object
@@ -42,33 +58,45 @@ class State:
     main_adapter: object | None = None
     main_adapter_path: str | None = None
 
-    def report(self):
-        state_classes = []
-
-        # check adapter state
-        plugged_in = False
-        if self.main_adapter is not None:
-            plugged_in = self.main_adapter.Online
+    def check_battery_percentage(self) -> tuple[int, str]:
+        """
+        returns battery percentage and battery percentage state class
+        """
 
         # check battery percentage
         percentage = 0
         if self.main_battery is not None:
             percentage = int(self.main_battery.Percentage)
             if Config.BATTERY_FULL_AT < 100:
-                percentage = percentage * 100 // Config.BATTERY_FULL_AT
+                percentage = int(round(percentage * 100 / Config.BATTERY_FULL_AT))
 
             percentage = min(percentage, 100)
 
-            # check percentage class
-            for state_class, threshold in sorted(Config.STATES.items(), key=lambda t: t[1]):
-                if percentage <= threshold:
-                    state_classes.append(state_class)
-                    break
+        # check percentage class
+        percentage_class = ""
+        for state_class, threshold in sorted(Config.STATES.items(), key=lambda t: t[1]):
+            if percentage <= threshold:
+                percentage_class = state_class
+                break
+
+        return percentage, percentage_class
+
+    def check_charge_state(self, percentage: int) -> ChargingState:
+        """
+        returns plugged_in, charging, discharging, and full state
+        """
+
+        # check adapter state
+        plugged_in = False
+        if self.main_adapter is not None:
+            plugged_in = self.main_adapter.Online
 
         # check charge state
         charging = False
+        discharging = False
         if self.main_battery is not None:
             charging = self.main_battery.State in [BatteryState.CHARGING, BatteryState.PENDING_CHARGE]
+            discharging = self.main_battery.State in [BatteryState.DISCHARGING, BatteryState.PENDING_DISCHARGE]
 
         # check full state
         full = False
@@ -77,31 +105,104 @@ class State:
             if percentage == 100 and plugged_in:
                 full = True
 
-        # check state class
-        alt_icon = ""
-        if full and plugged_in:
-            state_classes.append("plugged")
-            alt_icon = Config.ALT_ICON_PLUGGED
-        elif charging:
-            state_classes.append("charging")
-            alt_icon = Config.ALT_ICON_CHARGING
-        elif plugged_in:
-            state_classes.append("plugged")
-            alt_icon = Config.ALT_ICON_PLUGGED
+            # ensure full and charging/discharging are mutually exclusive
+            if full:
+                charging = False
+                discharging = False
 
-        # generate text
+        return ChargingState(plugged_in, charging, discharging, full)
+
+    def check_charge_time(self) -> tuple[int, int]:
+        """
+        returns time_to_full and time_to_empty
+        """
+
+        # check time to full and time to empty
+        time_to_full = 0
+        time_to_empty = 0
+        if self.main_battery is not None:
+            time_to_full = self.main_battery.TimeToFull
+            time_to_empty = self.main_battery.TimeToEmpty
+
+        return time_to_full, time_to_empty
+
+    def generate_charge_state_icon(self, state: ChargingState) -> tuple[str, str]:
+        """
+        returns charging state icon and and charging state css class
+        """
+
+        # check state class
+        charge_icon = ""
+        charge_class = ""
+        if state.full and state.plugged_in:
+            charge_class = "plugged"
+            charge_icon = Config.ALT_ICON_PLUGGED
+        elif state.charging:
+            charge_class = "charging"
+            charge_icon = Config.ALT_ICON_CHARGING
+        elif state.plugged_in:
+            charge_class = "plugged"
+            charge_icon = Config.ALT_ICON_PLUGGED
+
+        return charge_icon, charge_class
+
+    def generate_text(self, percentage: int) -> str:
+        """
+        returns main charging indicator text
+        """
+
         text = "?"
         if self.main_battery is not None:
             text = f"{int(percentage)}%"
 
+        return text
+
+    def generate_tooltip(self, state: ChargingState, time_to_full: int, time_to_empty: int) -> str:
+        """
+        returns charging indicator tooltip
+        """
+
         # generate tooltip
         tooltip = ""
-        # TODO: TimeToFull, TimeToEmpty
-        # TODO: additional batteries
+        if state.full:
+            tooltip = "Full"
+        elif time_to_full != 0:
+            tooltip = f"Time to full: {format_time(time_to_full)}"
+        elif time_to_empty != 0:
+            tooltip = f"Time to empty: {format_time(time_to_empty)}"
+        elif state.charging:
+            tooltip = "Charging..."
+        elif state.discharging and state.plugged_in:
+            tooltip = "Discharging while plugged..."
+        elif state.discharging:
+            tooltip = "Discharging..."
+        elif state.plugged_in:
+            tooltip = "Plugged"
+        else:
+            tooltip = "Unknown"
+
+        return tooltip
+
+    def report(self):
+        state_classes = []
+
+        percentage, percentage_class = self.check_battery_percentage()
+        if percentage_class != "":
+            state_classes.append(percentage_class)
+
+        state = self.check_charge_state(percentage)
+        time_to_full, time_to_empty = self.check_charge_time()
+
+        charge_icon, charge_class = self.generate_charge_state_icon(state)
+        if charge_class != "":
+            state_classes.append(charge_class)
+
+        text = self.generate_text(percentage)
+        tooltip = self.generate_tooltip(state, time_to_full, time_to_empty)
 
         print(json.dumps({
             "text": text,
-            "alt": alt_icon,
+            "alt": charge_icon,
             "tooltip": tooltip,
             "class": state_classes,
             "percentage": percentage,
@@ -116,7 +217,9 @@ class State:
             # battery change
             device_path in self.batteries and (
                 'State' in changes or
-                'Percentage' in changes
+                'Percentage' in changes or
+                'TimeToFull' in changes or
+                'TimeToEmpty' in changes
             )
         ):
             self.report()
