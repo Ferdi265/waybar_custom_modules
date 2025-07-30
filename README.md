@@ -4,8 +4,8 @@ This repo contains the waybar custom modules I use on my system. Each module is
 implemented as a subcommand of the `waybar-custom-modules` script provided by
 this Python package.
 
-All modules expect that waybar is using the `FontAwesome 6 Free` font package
-for icons.
+All modules expect that waybar is using the
+[FontAwesome](https://fontawesome.com/) font package for icons.
 
 ## Installation
 
@@ -15,6 +15,17 @@ Run `pipx install --editable .`
 
 Just add `waybar-custom-modules MODULENAME` as the `exec` option in a waybar
 custom module after installing.
+
+These modules use the [FontAwesome](https://fontawesome.com/) symbol font for
+icons, so you might need to add the following or something similar to your
+waybar `style.css`:
+
+```css
+/* .config/waybar/style.css */
+* {
+    font-family: DejaVu Sans, 'FontAwesome 7 Free', sans-serif;
+}
+```
 
 The following is a list of modules in this package:
 
