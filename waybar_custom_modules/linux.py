@@ -2,7 +2,6 @@ from subprocess import check_output
 import os.path
 import time
 import json
-import sys
 
 def report_empty():
     print(json.dumps({
@@ -10,16 +9,18 @@ def report_empty():
         "percentage": 0,
     }), flush=True)
 
-def report_updated(uname: str):
+def report_updated(uname: str, has_modules: bool):
     print(json.dumps({
         "text": "",
         "tooltip": uname,
-        "percentage": 100
+        "percentage": 100 if has_modules else 50,
     }), flush=True)
 
-def get_updated_tooltip(uname: str) -> str:
+def get_updated_tooltip(uname: str, has_modules: bool) -> str:
     linux_version = check_output(["pacman", "-Q", "linux"]).decode()[:-1]
     linux_version_parts = linux_version.split(" ")
+    if not has_modules:
+        uname += " (!)"
     if len(linux_version_parts) != 2:
         return f"{uname} -> ???"
     else:
@@ -33,6 +34,7 @@ def main():
         if os.path.exists(f"/usr/lib/modules/{uname}/vmlinuz"):
             report_empty()
         else:
-            report_updated(get_updated_tooltip(uname))
+            has_modules = os.path.exists(f"/usr/lib/modules/{uname}/kernel/arch")
+            report_updated(get_updated_tooltip(uname, has_modules), has_modules)
 
         time.sleep(5)

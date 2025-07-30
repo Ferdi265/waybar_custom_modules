@@ -35,7 +35,9 @@ Checks if the running kernel is still the installed kernel version, to remind
 me to reboot my machine if I face weird issues with kernel modules. This is
 also mitigated by my
 [linux-preserve-modules](https://aur.archlinux.org/packages/linux-preserve-modules)
-AUR package, but it doesn't hurt to have an additional reminder.
+AUR package, but it doesn't hurt to have an additional reminder. The displayed
+indicator inclues an exclamation mark if the currently running kernel does not
+have kernel modules in its modules directory.
 
 ```js
 // .config/waybar/config
@@ -43,7 +45,7 @@ AUR package, but it doesn't hurt to have an additional reminder.
     "custom/linux": {
         "exec": "waybar-custom-modules linux",
         "format": "{icon}",
-        "format-icons": ["", "\uf17c \uf021"],
+        "format-icons": ["", "\uf17c! \uf021", "\uf17c \uf021"],
         "return-type": "json"
     }
 }
