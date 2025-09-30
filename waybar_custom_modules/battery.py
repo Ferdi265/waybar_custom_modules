@@ -263,7 +263,11 @@ class State:
             if device in (self.main_battery, self.main_adapter):
                 continue
 
-            extra_tooltip += "\n" + self.generate_device_tooltip(device)
+            try:
+                extra_tooltip += "\n" + self.generate_device_tooltip(device)
+            except GLib.GError:
+                # ignore device disappearing before rendering the tooltip
+                pass
 
         if len(extra_tooltip) > 0:
             tooltip = f"Main Battery: {tooltip}" + extra_tooltip
