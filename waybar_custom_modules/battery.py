@@ -19,6 +19,65 @@ class DeviceType:
     UNKNOWN = 0
     LINE_POWER = 1
     BATTERY = 2
+    UPS = 3
+    MONITOR = 4
+    MOUSE = 5
+    KEYBOARD = 6
+    PDA = 7
+    PHONE = 8
+    MEDIA_PLAYER = 9
+    TABLET = 10
+    COMPUTER = 11
+    GAMING_INPUT = 12
+    PEN = 13
+    TOUCHPAD = 14
+    MODEM = 15
+    NETWORK = 16
+    HEADSET = 17
+    SPEAKERS = 18
+    HEADPHONES = 19
+    VIDEO = 20
+    OTHER_AUDIO = 21
+    REMOTE_CONTROL = 22
+    PRINTER = 23
+    SCANNER = 24
+    CAMERA = 25
+    WEARABLE = 26
+    TOY = 27
+    BLUETOOTH_GENERIC = 28
+
+    @staticmethod
+    def label(value: int) -> str | None:
+        return {
+            DeviceType.BATTERY: "Battery",
+            DeviceType.UPS: "UPS",
+            DeviceType.MONITOR: "Monitor",
+            DeviceType.MOUSE: "Mouse",
+            DeviceType.KEYBOARD: "Keyboard",
+            DeviceType.PDA: "PDA",
+            DeviceType.PHONE: "Phone",
+            DeviceType.MEDIA_PLAYER: "Media",
+            DeviceType.TABLET: "Tablet",
+            DeviceType.COMPUTER: "Computer",
+            DeviceType.GAMING_INPUT: "Gamepad",
+            DeviceType.PEN: "Pen",
+            DeviceType.TOUCHPAD: "Touchpad",
+            DeviceType.MODEM: "Modem",
+            DeviceType.NETWORK: "Network",
+            DeviceType.HEADSET: "Headset",
+            DeviceType.SPEAKERS: "Speakers",
+            DeviceType.HEADPHONES: "Headphones",
+            DeviceType.VIDEO: "Video",
+            DeviceType.OTHER_AUDIO: "Audio",
+            DeviceType.REMOTE_CONTROL: "Remote",
+            DeviceType.PRINTER: "Printer",
+            DeviceType.SCANNER: "Scanner",
+            DeviceType.CAMERA: "Camera",
+            DeviceType.WEARABLE: "Wearable",
+            DeviceType.TOY: "Toy",
+            DeviceType.BLUETOOTH_GENERIC: "BT",
+        }.get(value)
+
 
 class BatteryState:
     UNKNOWN = 0
@@ -157,6 +216,24 @@ class State:
 
         return text
 
+    def check_device_percentage(self, device: object) -> int:
+        """
+        returns battery percentage of a device
+        """
+        return int(device.Percentage)
+
+    def generate_device_tooltip(self, device: object) -> int:
+        """
+        returns tooltip of a device
+        """
+        name = device.Model
+        label = DeviceType.label(device.Type)
+        if label is not None:
+            name += " " + label
+
+        percent = self.check_device_percentage(device)
+        return f"{name}: {percent}%"
+
     def generate_tooltip(self, state: ChargingState, time_to_full: int, time_to_empty: int) -> str:
         """
         returns charging indicator tooltip
@@ -180,6 +257,16 @@ class State:
             tooltip = "Plugged"
         else:
             tooltip = "Unknown"
+
+        extra_tooltip = ""
+        for device_path, device in self.batteries.items():
+            if device in (self.main_battery, self.main_adapter):
+                continue
+
+            extra_tooltip += "\n" + self.generate_device_tooltip(device)
+
+        if len(extra_tooltip) > 0:
+            tooltip = f"Main Battery: {tooltip}" + extra_tooltip
 
         return tooltip
 
@@ -228,7 +315,7 @@ class State:
         device = self.bus.get("org.freedesktop.UPower", device_path)
 
         # match on all batteries or battery-like devices
-        if device.Type == DeviceType.BATTERY or (device.Energy != 0.0 and device.EnergyFull != 0.0):
+        if device.Type != DeviceType.LINE_POWER:
             self.batteries[device_path] = device
 
             if device.PowerSupply and self.main_battery_path is None:
@@ -254,7 +341,7 @@ class State:
             self.main_battery = None
 
             # find backup main battery
-            for device in self.batteries:
+            for backup_device_path, device in self.batteries.items():
                 if device.PowerSupply:
                     self.main_battery_path = device_path
                     self.main_battery = device
